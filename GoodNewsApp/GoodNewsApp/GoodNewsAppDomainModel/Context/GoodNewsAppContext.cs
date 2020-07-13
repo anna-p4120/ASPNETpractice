@@ -1,4 +1,4 @@
-﻿using GoodNewsApp.Models.Entities;
+﻿using GoodNewsApp.GoodNewsAppDomainModel.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 
-namespace GoodNewsApp.Models.Context
+namespace GoodNewsApp.GoodNewsAppDomainModel.Context
 {
     public class GoodNewsAppContext : DbContext
     {
@@ -19,7 +19,7 @@ namespace GoodNewsApp.Models.Context
 
         public GoodNewsAppContext(DbContextOptions<GoodNewsAppContext> options): base (options)
         {
-            Database.EnsureCreated();
+            //Database.EnsureCreated();
         }
 
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GoodNewsApp.Models.Entities
+namespace GoodNewsApp.GoodNewsAppDomainModel.Entities
 {
     public class Role
     {

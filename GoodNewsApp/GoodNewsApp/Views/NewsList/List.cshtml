@@ -1,7 +1,7 @@
-﻿@model IEnumerable<GoodNewsApp.Models.Entities.News>
+﻿@model IEnumerable<GoodNewsApp.GoodNewsAppDomainModel.Entities.News>
 
 @{
-    ViewData["Title"] = "News";
+    ViewData["Title"] = "NewsList";
 }
 
     <h1>News</h1>
@@ -16,13 +16,16 @@
                 @Html.DisplayNameFor(model => model.Title)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Content)
+                @Html.DisplayNameFor(model => model.Body)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.SourseURL)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.PublicationDate)
+                @Html.DisplayNameFor(model => model.CreatedOnDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EditedOnDate)
             </th>
             <th></th>
         </tr>
@@ -34,13 +37,16 @@
                 @Html.DisplayFor(modelItem => item.Title)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Content)
+                @Html.DisplayFor(modelItem => item.Body)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.SourseURL)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.PublicationDate)
+                @Html.DisplayFor(modelItem => item.CreatedOnDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EditedOnDate)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

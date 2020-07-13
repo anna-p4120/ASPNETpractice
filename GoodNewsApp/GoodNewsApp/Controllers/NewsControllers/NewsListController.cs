@@ -5,29 +5,32 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using GoodNewsApp.Models.Context;
-using GoodNewsApp.Models.Entities;
+using GoodNewsApp.GoodNewsAppDomainModel.Context;
+using GoodNewsApp.GoodNewsAppDomainModel.Entities;
+using GoodNewsApp.Models;
 
-namespace GoodNewsApp.Controllers
+namespace GoodNewsApp.NewsControllers.Controllers
 {
-    public class NewsController : Controller
+    public class NewsListController : Controller
     {
         private readonly GoodNewsAppContext _context;
 
         
 
-        public NewsController(GoodNewsAppContext context)
+        public NewsListController(GoodNewsAppContext context)
         {
             _context = context;
         }
 
 
         // GET: News
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> List()
         {
             return View(await _context.News.ToListAsync());
         }
 
+        
+        
         // GET: News/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
@@ -46,6 +49,8 @@ namespace GoodNewsApp.Controllers
             return View(news);
         }
 
+     
+        
         // GET: News/Create
         public IActionResult Create()
         {
@@ -57,15 +62,15 @@ namespace GoodNewsApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Content,SourseURL,PublicationDate")] News news)
+        public async Task<IActionResult> Create(News news) //[Bind("Title,Content,SourseURL")] 
         {
             if (ModelState.IsValid)
             {
                 news.Id = Guid.NewGuid();
-                news.PublicationDate = DateTime.Now;//
+                news.CreatedOnDate = DateTime.Now;//
                 _context.Add(news);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(List));
             }
             return View(news);
         }
@@ -91,7 +96,7 @@ namespace GoodNewsApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Title,Content,SourseURL,PublicationDate")] News news)
+        public async Task<IActionResult> Edit(Guid id, News news)//
         {
             if (id != news.Id)
             {
@@ -102,7 +107,7 @@ namespace GoodNewsApp.Controllers
             {
                 try
                 {
-                    news.PublicationDate = DateTime.Now;//
+                    news.EditedOnDate = DateTime.Now;//
                     _context.Update(news);
 
                     await _context.SaveChangesAsync();
@@ -118,7 +123,7 @@ namespace GoodNewsApp.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(List));
             }
             return View(news);
         }
@@ -149,7 +154,7 @@ namespace GoodNewsApp.Controllers
             var news = await _context.News.FindAsync(id);
             _context.News.Remove(news);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(List));
         }
 
         private bool NewsExists(Guid id)

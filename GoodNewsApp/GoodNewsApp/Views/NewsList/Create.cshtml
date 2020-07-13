@@ -1,4 +1,4 @@
-﻿@model GoodNewsApp.Models.Entities.News
+﻿@model GoodNewsApp.GoodNewsAppDomainModel.Entities.News
 
 @{
     ViewData["Title"] = "Create";
@@ -18,20 +18,16 @@
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Content" class="control-label"></label>
-                <input asp-for="Content" class="form-control" />
-                <span asp-validation-for="Content" class="text-danger"></span>
+                <label asp-for="Body" class="control-label"></label>
+                <input asp-for="Body" class="form-control" />
+                <span asp-validation-for="Body" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="SourseURL" class="control-label"></label>
                 <input asp-for="SourseURL" class="form-control" />
                 <span asp-validation-for="SourseURL" class="text-danger"></span>
             </div>
-            @*<div class="form-group">
-                <label asp-for="PublicationDate" class="control-label"></label>
-                <input asp-for="PublicationDate" class="form-control" />
-                <span asp-validation-for="PublicationDate" class="text-danger"></span>
-            </div>*@
+            
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -40,7 +36,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="List">Back to List</a>
 </div>
 
 @section Scripts {
