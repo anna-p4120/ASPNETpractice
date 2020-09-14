@@ -1,0 +1,60 @@
+﻿@model IEnumerable<GoodNewsApp.BusinessLogic.NewsDTO>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to GoodNewsWorld</h1>
+
+</div>
+
+@*<h1>News</h1>*@
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Body)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SourseURL)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedOnDate)
+            </th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Body)
+                </td>
+                <td>
+                    <a href="@item.SourseURL">
+                        @Html.DisplayFor(modelItem => item.SourseURL)
+
+                    </a>
+
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CreatedOnDate)
+                </td>
+                <td>
+
+                    <a asp-action="Details" asp-controller="Home" asp-route-id="@item.Id">Read news</a>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

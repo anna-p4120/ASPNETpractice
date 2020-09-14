@@ -1,0 +1,35 @@
+﻿@model GoodNewsApp.WEB.Models.NewsDetailsViewModel
+
+@{
+    ViewData["Title"] = "GoodNews";
+}
+
+<h1>@Html.DisplayFor(model => model.Title)</h1>
+
+<div>
+    @Html.DisplayFor(model => model.Body)
+</div>
+<div>
+
+    <hr />
+    <dl class="row">
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.SourseURL)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.SourseURL)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CreatedOnDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CreatedOnDate)
+        </dd>
+
+    </dl>
+</div>
+<div>
+    <a asp-action="Index">К списку новостей</a>
+    <a asp-action="Edit" asp-controller="NewsEditor" asp-route-id="@Html.ValueFor(Model=>Model.Id)">Редактировать</a>
+</div>
