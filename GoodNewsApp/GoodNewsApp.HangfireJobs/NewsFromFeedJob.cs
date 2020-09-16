@@ -1,4 +1,5 @@
-﻿using Hangfire;
+﻿using GoodNewsApp.BusinessLogic.Services.NewsServices;
+using Hangfire;
 using Hangfire.Common;
 using System;
 using System.Collections.Generic;

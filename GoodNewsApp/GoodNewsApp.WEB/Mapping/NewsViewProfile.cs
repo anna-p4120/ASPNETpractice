@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using GoodNewsApp.BusinessLogic;
+using GoodNewsApp.BusinessLogic.Services.NewsServices;
 using GoodNewsApp.WEB.Models;
 using System;
 using System.Collections.Generic;

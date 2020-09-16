@@ -13,10 +13,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading;
 using System.Security.Claims;
-using GoodNewsApp.BusinessLogic.Services;
-using GoodNewsApp.BusinessLogic;
 using Hangfire;
 using HtmlAgilityPack;
+using GoodNewsApp.BusinessLogic.Services.NewsServices;
 
 namespace GoodNewsApp.WEB.Controllers
 {

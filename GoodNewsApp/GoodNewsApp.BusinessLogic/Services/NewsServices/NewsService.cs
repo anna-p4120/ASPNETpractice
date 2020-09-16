@@ -10,7 +10,7 @@ using System.Threading;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
-namespace GoodNewsApp.BusinessLogic.Services
+namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 {
     public class NewsService
     {
@@ -26,18 +26,18 @@ namespace GoodNewsApp.BusinessLogic.Services
 
         public async Task AddAsync(NewsDTO newsDTO) //[Bind("Title,Content,SourseURL")] 
         {
-           // News newsCreated = new News();
+            // News newsCreated = new News();
             News newsCreated = _mapper.Map<News>(newsDTO);
 
-                await _unitOfWork.NewsRepository.AddAsync(newsCreated);
-                await _unitOfWork.SaveChangeAsync();
-                     
+            await _unitOfWork.NewsRepository.AddAsync(newsCreated);
+            await _unitOfWork.SaveChangeAsync();
+
         }
 
-        
-        public async Task<NewsDTO> GetByIdAsync(Guid id, CancellationToken token) 
+
+        public async Task<NewsDTO> GetByIdAsync(Guid id, CancellationToken token)
         {
-            
+
             News newsById = await _unitOfWork.NewsRepository.GetByIdAsync(id, token);
             NewsDTO newsDTObyId = _mapper.Map<NewsDTO>(newsById);
             return newsDTObyId;
@@ -61,7 +61,7 @@ namespace GoodNewsApp.BusinessLogic.Services
             News newsToUpdate = _mapper.Map<News>(newsDTO);
             try
             {
-                
+
                 _unitOfWork.NewsRepository.Update(newsToUpdate);
 
                 await _unitOfWork.SaveChangeAsync();
@@ -80,25 +80,25 @@ namespace GoodNewsApp.BusinessLogic.Services
                 }
             }
 
-            
+
         }
 
 
         public async Task Delete(Guid id) //[Bind("Title,Content,SourseURL")] 
         {
 
-            
+
             try
             {
                 await _unitOfWork.NewsRepository.Delete(id);
-            await _unitOfWork.SaveChangeAsync();
+                await _unitOfWork.SaveChangeAsync();
 
             }
             catch
             {
                 throw;
             }
-            
+
 
 
         }

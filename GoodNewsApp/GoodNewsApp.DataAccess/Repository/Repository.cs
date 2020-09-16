@@ -53,6 +53,11 @@ namespace GoodNewsApp.DataAccess.Repository
             await _dbSet.AddAsync(obj);
         }
 
+        public void Add(TEntity obj)
+        {
+            _dbSet.Add(obj);
+        }
+
         public async Task AddRangeAsync(IEnumerable<TEntity> obj)
         {
             await _dbSet.AddRangeAsync(obj);

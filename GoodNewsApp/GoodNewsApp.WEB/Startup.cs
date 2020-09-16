@@ -21,6 +21,11 @@ using Hangfire.SqlServer;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.IO;
+using GoodNewsApp.BusinessLogic.Services.NewsServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using GoodNewsApp.BusinessLogic.Helpers;
 
 namespace GoodNewsApp.WEB
 {
@@ -37,9 +42,10 @@ namespace GoodNewsApp.WEB
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            string connectionString = Configuration.GetConnectionString("DefaultConnection");
 
-            services.AddSwaggerGen(c =>
+
+            services.AddSwaggerGen
+                (c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
@@ -47,7 +53,7 @@ namespace GoodNewsApp.WEB
                     Title = "GoodNewsWebAPI"
                 });
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+               var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
 
@@ -55,6 +61,49 @@ namespace GoodNewsApp.WEB
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => options.LoginPath = "/UserAccount/Login");
 
+            // configure strongly typed settings objects
+            var appSettingsSection = Configuration.GetSection("AppSettings");
+            services.Configure<AppSettings>(appSettingsSection);
+
+            // configure jwt authentication
+            var appSettings = appSettingsSection.Get<AppSettings>();
+            byte[] key = Encoding.ASCII.GetBytes(appSettings.Secret);
+
+
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
+                    {
+                        var userService = context.HttpContext.RequestServices.GetRequiredService<UnitOfWork>();
+                        var userName = context.Principal.Identity.Name;
+                        var user = userService.UserRepository.FindBy(u => u.Name == userName).FirstOrDefault();
+                        if (user == null)
+                        {
+                            // return unauthorized if user no longer exists
+                            context.Fail("Unauthorized");
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
+
+            string connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<GoodNewsAppContext>(options => options.UseSqlServer(connectionString));
 
 
@@ -73,7 +122,7 @@ namespace GoodNewsApp.WEB
 
             services.AddSingleton<NewsFromFeedJob>();
 
-            services.AddScoped<DbInitializer>(); //!!!!error with singlton
+            services.AddScoped<DbInitializer>(); //!!!!TODO
 
             services.AddAutoMapper(typeof(GoodNewsApp.BusinessLogic.Mapping.NewsProfile));
 
@@ -114,18 +163,21 @@ namespace GoodNewsApp.WEB
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseSwagger();
-
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-            });
-
+            
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseHangfireDashboard();
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI
+            (c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+        });
+
 
             //TODO hangfire: authorization!!!
             app.UseEndpoints(endpoints =>
@@ -136,9 +188,9 @@ namespace GoodNewsApp.WEB
                 endpoints.MapHangfireDashboard(); 
             });
 
-            //TODO
-            //var _dbInitializer = serviceProvider.GetService<DbInitializer>(); 
-            //await _dbInitializer.InitializeWithUsersAndRolesAsync()//async
+            //????
+            var _dbInitializer = serviceProvider.GetService<DbInitializer>();
+            _dbInitializer.InitializeWithUsersAndRoles();
 
             recurringJobManager.AddOrUpdate("GetAndStoreNews",() => serviceProvider.GetService<NewsFromFeedJob>().CreateAndStoreNewsFromFeed(), Cron.Daily());
         }

@@ -9,9 +9,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GoodNewsApp.BusinessLogic.Services
+namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 {
-   public class NewsRangeLoader 
+    public class NewsRangeLoader
     {
 
 
@@ -19,8 +19,8 @@ namespace GoodNewsApp.BusinessLogic.Services
         //;NewsService newsService, 
         private readonly UnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public NewsRangeLoader( UnitOfWork unitOfWork, IMapper mapper)
-            {
+        public NewsRangeLoader(UnitOfWork unitOfWork, IMapper mapper)
+        {
             //_newsService = newsService;
             // _newsDTO = newsDTO;
 
@@ -28,19 +28,19 @@ namespace GoodNewsApp.BusinessLogic.Services
             _mapper = mapper;
         }
 
-       
-            public async Task<bool> UpdateRangeByUrlAsync(List<NewsDTO> newsDTOToStore, CancellationToken token)
-            {
+
+        public async Task<bool> UpdateRangeByUrlAsync(List<NewsDTO> newsDTOToStore, CancellationToken token)
+        {
 
             List<News> newsAll = await _unitOfWork.NewsRepository.GetAllAsync(token);
-            
-            
+
+
             //List<NewsDTO> newsDTOFromDB = await _newsService.GetAllAsync(token);
-           
+
 
             //replace by update
             foreach (var n in newsDTOToStore)
-                { 
+            {
                 News newsCreated = _mapper.Map<News>(n);
 
                 if (newsAll.Any(e => e.SourseURL == n.SourseURL))
@@ -61,27 +61,27 @@ namespace GoodNewsApp.BusinessLogic.Services
                     }
                     catch (DbUpdateConcurrencyException)
                     {
-                        
-                            throw;
-                        
+
+                        throw;
+
                     }
 
                 }
 
                 //else
-               // {
-                    
+                // {
 
-                    await _unitOfWork.NewsRepository.AddAsync(newsCreated);
-               // }
-                }
+
+                await _unitOfWork.NewsRepository.AddAsync(newsCreated);
+                // }
+            }
             //await _newsService.Update(n);
             await _unitOfWork.SaveChangeAsync();
 
             return true;
-            }
         }
+    }
 }
 
-    
+
 

@@ -1,4 +1,4 @@
-﻿using GoodNewsApp.BusinessLogic.Services;
+﻿using GoodNewsApp.BusinessLogic.Services.NewsServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;

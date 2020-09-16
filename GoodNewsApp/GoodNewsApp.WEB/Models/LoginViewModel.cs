@@ -16,6 +16,7 @@ namespace GoodNewsApp.WEB.Models
         [Display(Name = "Пароль")]
         public string Password { get; set; }
 
+        // by Filter?
         public string ReturnURL { get; set; }
 
 

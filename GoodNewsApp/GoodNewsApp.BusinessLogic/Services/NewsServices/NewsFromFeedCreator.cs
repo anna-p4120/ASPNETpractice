@@ -7,7 +7,7 @@ using System.ServiceModel.Syndication;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodNewsApp.BusinessLogic.Services
+namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 {
     public class NewsFromFeedCreator
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using GoodNewsApp.BusinessLogic.Services.UsersServices;
 using GoodNewsApp.DataAccess.Context;
 using GoodNewsApp.DataAccess.Entities;
 using GoodNewsApp.DataAccess.Repository;
@@ -59,17 +60,21 @@ namespace GoodNewsApp.WEB.Controllers
                 User userFromDB = await _unitOfWork.UserRepository.FindBy(u => u.Email == registerViewModel.Email).FirstOrDefaultAsync();
                 if (userFromDB == null)
                 {
+                    string passwordHash, passwordSalt;
+
+                    PasswordManager.CreatePasswordHash(registerViewModel.Password, out passwordHash, out passwordSalt);
                     User newUser = new User()
                     {
                         Id = Guid.NewGuid(),
                         Name = registerViewModel.Name ?? registerViewModel.Email,
                         Email = registerViewModel.Email,
-                        PasswordHash = registerViewModel.Password,
+                        PasswordHash = passwordHash,
+                        PasswordSalt = passwordSalt
                     };
 
                     await _unitOfWork.UserRepository.AddAsync(newUser);
 
-                    //default role as const
+                    //TODO: default role as const
                     Guid defaultRoleId = (await _unitOfWork.RoleRepository.FindBy(u => u.Name == "User").FirstOrDefaultAsync()).Id;
 
                     UserRole newUserRole = new UserRole()
@@ -135,19 +140,24 @@ namespace GoodNewsApp.WEB.Controllers
             {
 
                 User userFromDB = await _unitOfWork.UserRepository.
-                    FindBy(u => u.Email == loginViewModel.Email && u.PasswordHash == loginViewModel.Password)
+                    FindBy(u => u.Email == loginViewModel.Email)// && u.PasswordHash == loginViewModel.Password
                     .FirstOrDefaultAsync();
 
                 if (userFromDB != null)
                 {
-                    // ! if more than one...?
-                   Guid userFromDBRoleId = (await _unitOfWork.UserRoleRepository.
+                    if (!PasswordManager.VerifyPasswordHash(loginViewModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
+                    {
+                        // ! if more than one...?
+                        Guid userFromDBRoleId = (await _unitOfWork.UserRoleRepository.
                         FindBy(u => u.UserId == userFromDB.Id).FirstOrDefaultAsync())
                         .RoleId;
-              
-                    await Authenticate(userFromDB.Name, userFromDBRoleId);
 
-                    await _unitOfWork.SaveChangeAsync();
+                        await Authenticate(userFromDB.Name, userFromDBRoleId);
+
+                        await _unitOfWork.SaveChangeAsync();
+
+                    }
+                        
 
                 }
                 else

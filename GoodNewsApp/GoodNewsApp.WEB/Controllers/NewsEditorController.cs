@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
-using GoodNewsApp.BusinessLogic;
-using GoodNewsApp.BusinessLogic.Services;
+using GoodNewsApp.BusinessLogic.Services.NewsServices;
 using GoodNewsApp.DataAccess.Context;
 using GoodNewsApp.DataAccess.Entities;
 using GoodNewsApp.DataAccess.Interfaces;
