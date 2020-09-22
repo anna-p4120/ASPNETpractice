@@ -1,4 +1,7 @@
-﻿using GoodNewsApp.BusinessLogic.Services.NewsServices;
+﻿using GoodNewsApp.BusinessLogic.Interfaces;
+using GoodNewsApp.BusinessLogic.Services.NewsServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,17 +17,18 @@ namespace GoodNewsApp.WebAPI.Controllers
     public class NewsController : ControllerBase
     {
         private readonly ILogger<NewsController> _logger;
-        private readonly NewsService _newsService;
+
+        private readonly INewsService _newsService;
 
         public static CancellationToken cancellationToken = new CancellationTokenSource().Token;
-        public NewsController(ILogger<NewsController> logger, NewsService newsService)
+
+        public NewsController(ILogger<NewsController> logger, INewsService newsService)
         {
-            _logger = logger;
-
-
-            _newsService = newsService;
+         _logger = logger;
+         _newsService = newsService;
         }
 
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         public async Task<IActionResult> GetList()
         {

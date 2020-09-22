@@ -12,14 +12,14 @@ using System.Threading.Tasks;
 
 namespace GoodNewsApp.DataAccess.Repository
 {
-    public abstract class Repository<TEntity> : IRepository<TEntity> where TEntity : class, IEntity
+    public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, IEntity
 
     {
         private readonly GoodNewsAppContext _context;
         private readonly DbSet<TEntity> _dbSet;
-        private readonly TEntity _entity;
+        //private readonly TEntity _entity;
 
-        protected Repository(GoodNewsAppContext context)
+        public Repository(GoodNewsAppContext context)
         {
             _context = context;
             _dbSet = _context.Set<TEntity>(); 

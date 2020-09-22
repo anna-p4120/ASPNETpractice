@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using GoodNewsApp.BusinessLogic.Services.UsersServices;
 using GoodNewsApp.DataAccess.Context;
 using GoodNewsApp.DataAccess.Entities;
+using GoodNewsApp.DataAccess.Interfaces;
 using GoodNewsApp.DataAccess.Repository;
 using GoodNewsApp.WEB.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -22,10 +23,10 @@ namespace GoodNewsApp.WEB.Controllers
     public class UserAccountController : Controller
     {
         private readonly GoodNewsAppContext _context;
-        private readonly UnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
 
 
-        public UserAccountController(GoodNewsAppContext context, UnitOfWork unitOfWork)
+        public UserAccountController(GoodNewsAppContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
             _unitOfWork = unitOfWork;
@@ -88,7 +89,7 @@ namespace GoodNewsApp.WEB.Controllers
 
                     await _unitOfWork.UserRoleRepository.AddAsync(newUserRole);
 
-                    await Authenticate(newUser.Name, defaultRoleId);
+                    await AuthenticateAsync(newUser.Name, defaultRoleId);
 
                     await _unitOfWork.SaveChangeAsync();
 
@@ -145,14 +146,14 @@ namespace GoodNewsApp.WEB.Controllers
 
                 if (userFromDB != null)
                 {
-                    if (!PasswordManager.VerifyPasswordHash(loginViewModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
+                    if (PasswordManager.VerifyPasswordHash(loginViewModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
                     {
                         // ! if more than one...?
                         Guid userFromDBRoleId = (await _unitOfWork.UserRoleRepository.
                         FindBy(u => u.UserId == userFromDB.Id).FirstOrDefaultAsync())
                         .RoleId;
 
-                        await Authenticate(userFromDB.Name, userFromDBRoleId);
+                        await AuthenticateAsync(userFromDB.Name, userFromDBRoleId);
 
                         await _unitOfWork.SaveChangeAsync();
 
@@ -175,7 +176,9 @@ namespace GoodNewsApp.WEB.Controllers
             return View();
         }
 
-        private async Task Authenticate (string userName, Guid roleId)
+
+        //TODO userName replace by email
+        private async Task AuthenticateAsync (string userName, Guid roleId)
         {
             IEnumerable<Claim> claims = new List<Claim>
             {
@@ -190,6 +193,7 @@ namespace GoodNewsApp.WEB.Controllers
                 );
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(Id));
+
             
         }
 

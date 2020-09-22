@@ -27,6 +27,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using GoodNewsApp.BusinessLogic.Helpers;
 
+using GoodNewsApp.BusinessLogic.Interfaces;
+
 namespace GoodNewsApp.WEB
 {
     public class Startup
@@ -58,9 +60,7 @@ namespace GoodNewsApp.WEB
             });
 
 
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options => options.LoginPath = "/UserAccount/Login");
-
+           
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);
@@ -70,18 +70,18 @@ namespace GoodNewsApp.WEB
             byte[] key = Encoding.ASCII.GetBytes(appSettings.Secret);
 
 
-            services.AddAuthentication(x =>
-            {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(x =>
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+               .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
+               options => options.LoginPath = "/UserAccount/Login")
+
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,
+            x =>
             {
                 x.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = context =>
                     {
-                        var userService = context.HttpContext.RequestServices.GetRequiredService<UnitOfWork>();
+                        var userService = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
                         var userName = context.Principal.Identity.Name;
                         var user = userService.UserRepository.FindBy(u => u.Name == userName).FirstOrDefault();
                         if (user == null)
@@ -106,25 +106,23 @@ namespace GoodNewsApp.WEB
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<GoodNewsAppContext>(options => options.UseSqlServer(connectionString));
 
-
-            //services.AddScoped(typeof(Repository<>), typeof(NewsRepository));
-            //services.AddScoped(typeof(Repository<>), typeof(UserRepository));
             
-           
-            //TODO interfaces
+            services.AddScoped(typeof(IRepository<News>), typeof(NewsRepository));
+            services.AddScoped(typeof(IRepository<User>), typeof(Repository<User>));
+            services.AddScoped(typeof(IRepository<UserRole>), typeof(Repository<UserRole>));
+            services.AddScoped(typeof(IRepository<Role>), typeof(Repository<Role>));
 
-            services.AddScoped<NewsRepository>();
-            services.AddScoped<UserRepository>();
-            services.AddScoped<UserRoleRepository>();
-            services.AddScoped<RoleRepository>();
-            services.AddScoped<UnitOfWork>();
-            services.AddScoped<NewsService>();
+           
+            services.AddScoped<IUnitOfWork,UnitOfWork>();
+
+            services.AddScoped<INewsService, NewsService>();
 
             services.AddSingleton<NewsFromFeedJob>();
 
             services.AddScoped<DbInitializer>(); //!!!!TODO
 
             services.AddAutoMapper(typeof(GoodNewsApp.BusinessLogic.Mapping.NewsProfile));
+
 
             services.AddHangfire(config =>
                 config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
@@ -139,6 +137,7 @@ namespace GoodNewsApp.WEB
                 }));
 
             services.AddHangfireServer();
+
 
             services.AddControllersWithViews();
         }
@@ -167,16 +166,12 @@ namespace GoodNewsApp.WEB
             app.UseRouting();
 
             app.UseAuthentication();
+
             app.UseAuthorization();
+
             app.UseHangfireDashboard();
 
-            app.UseSwagger();
-
-            app.UseSwaggerUI
-            (c =>
-        {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-        });
+            
 
 
             //TODO hangfire: authorization!!!
@@ -187,6 +182,15 @@ namespace GoodNewsApp.WEB
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapHangfireDashboard(); 
             });
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI
+            (c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+            });
+
 
             //????
             var _dbInitializer = serviceProvider.GetService<DbInitializer>();

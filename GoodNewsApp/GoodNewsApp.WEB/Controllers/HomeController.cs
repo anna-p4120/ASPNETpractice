@@ -14,26 +14,25 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading;
 using System.Security.Claims;
 using Hangfire;
-using HtmlAgilityPack;
+using GoodNewsApp.BusinessLogic.Helpers;
 using GoodNewsApp.BusinessLogic.Services.NewsServices;
+using GoodNewsApp.BusinessLogic.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace GoodNewsApp.WEB.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly NewsService _newsService;
+        private readonly INewsService _newsService;
 
         //TODO
         public static CancellationToken cancellationToken = new CancellationTokenSource().Token;
 
-        //TODO
-        private readonly DbInitializer _dbInitializer;
-       
-        public HomeController(ILogger<HomeController> logger, DbInitializer dbInitializer, NewsService newsService)
+               
+        public HomeController(ILogger<HomeController> logger, INewsService newsService)
         {
-            _logger = logger;
-            _dbInitializer = dbInitializer;
+            _logger = logger;       
             _newsService = newsService;
         }
 
@@ -41,21 +40,16 @@ namespace GoodNewsApp.WEB.Controllers
 
         public async Task<IActionResult> Index()
         {
-            
-            // TODO: move to????
-            await _dbInitializer.InitializeWithUsersAndRolesAsync();
-
-            
             var newsList = await _newsService.GetAllAsync(cancellationToken);
             return View(newsList.OrderByDescending(n => n.CreatedOnDate));
-
-
         }
 
-        [Authorize]
+
+        [Authorize(AuthenticationSchemes =
+        CookieAuthenticationDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Details(Guid id)
         {
-            var n = HttpContext.User.Identity.Name;
+            //var n = HttpContext.User.Identity.Name;
 
             if (id == null)
             {

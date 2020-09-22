@@ -12,14 +12,20 @@ namespace GoodNewsApp.DataAccess.Repository
     {
         private readonly GoodNewsAppContext _context;
 
-        public NewsRepository NewsRepository { get; }
-        public UserRepository UserRepository { get; }
+        public IRepository<News> NewsRepository { get; }
+        public IRepository<User> UserRepository { get; }
 
-        public UserRoleRepository UserRoleRepository { get; }
+        public IRepository<UserRole> UserRoleRepository { get; }
 
-        public RoleRepository RoleRepository { get; }
+        public IRepository<Role> RoleRepository { get; }
 
-        public UnitOfWork(GoodNewsAppContext context, NewsRepository newsRepository, UserRepository userRepository, UserRoleRepository userRoleRepository,  RoleRepository roleRepository)
+        public UnitOfWork(
+            GoodNewsAppContext context, 
+            IRepository<News> newsRepository,
+            IRepository<User> userRepository,
+            IRepository<UserRole> userRoleRepository,
+            IRepository<Role> roleRepository)
+
         {
             _context = context;
             NewsRepository = newsRepository;

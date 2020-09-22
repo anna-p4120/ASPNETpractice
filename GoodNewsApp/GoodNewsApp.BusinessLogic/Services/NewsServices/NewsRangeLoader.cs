@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GoodNewsApp.DataAccess.Entities;
+using GoodNewsApp.DataAccess.Interfaces;
 using GoodNewsApp.DataAccess.Repository;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -17,9 +18,9 @@ namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 
         // private readonly NewsService _newsService;NewsService newsService,
         //;NewsService newsService, 
-        private readonly UnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public NewsRangeLoader(UnitOfWork unitOfWork, IMapper mapper)
+        public NewsRangeLoader(IUnitOfWork unitOfWork, IMapper mapper)
         {
             //_newsService = newsService;
             // _newsDTO = newsDTO;

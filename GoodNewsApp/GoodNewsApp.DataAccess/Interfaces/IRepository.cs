@@ -22,14 +22,14 @@ namespace GoodNewsApp.DataAccess.Interfaces
 
         Task AddAsync(TEntity obj);
 
+        void Add(TEntity obj);
+        
         Task AddRangeAsync(IEnumerable<TEntity> obj);
 
         void Update(TEntity obj);
 
         Task Delete(Guid id);
 
-        // Task<int> SaveChangesAsync();
-
-
+        
     }
 }

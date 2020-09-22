@@ -16,57 +16,50 @@ using Microsoft.IdentityModel.Tokens;
 using GoodNewsApp.BusinessLogic.Helpers;
 using Microsoft.Extensions.Options;
 using System.Threading;
+using GoodNewsApp.DataAccess.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace GoodNewsApp.WebAPI.Controllers
 {
     [ApiController]
-    [Authorize]
-   [Route("api/users")]
-    class UsersController : ControllerBase
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Route("api/users")]
+    public class UsersController : ControllerBase
     {
-        //private readonly GoodNewsAppContext _context;
-        private readonly UnitOfWork _unitOfWork;
+        
+        private readonly IUnitOfWork _unitOfWork;
         private readonly AppSettings _appSettings;
 
         public static CancellationToken cancellationToken = new CancellationTokenSource().Token;
-        public UsersController(UnitOfWork unitOfWork, IOptions<AppSettings> appSettings) //GoodNewsAppContext context, 
-        {
-           // _context = context;
+
+        public UsersController(IUnitOfWork unitOfWork, IOptions<AppSettings> appSettings)
+        {          
             _unitOfWork = unitOfWork;
             _appSettings = appSettings.Value;
+
+
         }
 
-        /*[HttpGet]
-        public async Task<IActionResult> GetList()
-        {
-            try
-            {
-                var newsList = await _unitOfWork.UserRepository.GetAllAsync(cancellationToken);
-                return Ok(newsList);
 
-            }
-            catch
-            {
-                return StatusCode(500);
-            }
-        }*/
+        //!string.IsNullOrEmpty(registerModel.Email)
+        //        && !string.IsNullOrEmpty(registerModel.Password)
+        //        && string.Compare(registerModel.ConfirmPassword, registerModel.Password) == 0
 
+
+        //TODO compare string object
 
         [AllowAnonymous]
-      [HttpPost]
-        
+        [HttpPost]
+        [Route("register")]
+
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterModel registerModel) //
         {
-            if (!string.IsNullOrEmpty(registerModel.Email)
-                && !string.IsNullOrEmpty(registerModel.Password)
-                && string.Compare(registerModel.ConfirmPassword, registerModel.Password) == 0) //compare string object
+            if (ModelState.IsValid) 
             {
 
                 User userFromDB = await _unitOfWork.UserRepository.FindBy(u => u.Email == registerModel.Email).FirstOrDefaultAsync();
                 if (userFromDB == null)
                 {
-                    
-
                     try
                     {
                         string passwordHash, passwordSalt;
@@ -79,7 +72,7 @@ namespace GoodNewsApp.WebAPI.Controllers
                             Name = registerModel.Name ?? registerModel.Email,
                             Email = registerModel.Email,
                             PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt//CreatePasswordHash
+                            PasswordSalt = passwordSalt
                         };
 
                         Guid defaultRoleId = (await _unitOfWork.RoleRepository.FindBy(u => u.Name == "User").FirstOrDefaultAsync()).Id;
@@ -93,25 +86,19 @@ namespace GoodNewsApp.WebAPI.Controllers
 
                         };
 
-                        // CREATE
-                        // create user
+                        
                         await _unitOfWork.UserRepository.AddAsync(newUser);
 
                         await _unitOfWork.UserRoleRepository.AddAsync(newUserRole);
-
-                        //await Authenticate(newUser.Name, defaultRoleId);
-
+                        
                         await _unitOfWork.SaveChangeAsync();
 
-
-                        return Ok();//newUser
-
+                        return Ok(); //newUser
 
 
                     }
                     catch (Exception ex)
                     {
-                        // return error message if there was an exception
                         return BadRequest(new { message = ex.Message });
                     }
 
@@ -127,75 +114,53 @@ namespace GoodNewsApp.WebAPI.Controllers
 
        [AllowAnonymous]
        [HttpPost]
-        public async Task<IActionResult> LoginAsync([FromBody] LoginModel loginModel)
+       [Route("login")]
+        public async Task<IActionResult> LoginAsync([FromBody] LoginModel loginModel) 
         {
-            if (!string.IsNullOrEmpty(loginModel.Email) && !string.IsNullOrEmpty(loginModel.Password))
+            //!string.IsNullOrEmpty(loginModel.Email) && !string.IsNullOrEmpty(loginModel.Password)
+            
+            if (ModelState.IsValid)
             {
                 User userFromDB = await _unitOfWork.UserRepository.
-                    FindBy(u => u.Email == loginModel.Email)// && u.PasswordHash == loginModel.Password
-                    .FirstOrDefaultAsync();
+                    FindBy(u => string.Compare(u.Email, loginModel.Email) == 0)
+                  .FirstOrDefaultAsync();
 
                 if (userFromDB != null)
                 {
 
-                    if (!PasswordManager.VerifyPasswordHash(loginModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
+                    if (PasswordManager.VerifyPasswordHash(loginModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
                     {
                         // ! if more than one...?
-                        Guid userFromDBRoleId = (await _unitOfWork.UserRoleRepository.
-                         FindBy(u => u.UserId == userFromDB.Id).FirstOrDefaultAsync())
+                        Guid userFromDBRoleId = 
+                         (await _unitOfWork.UserRoleRepository.
+                         FindBy(u => u.UserId == userFromDB.Id)
+                         .FirstOrDefaultAsync())
                          .RoleId;
-
-                         string tokenString = CreateToken(userFromDB.Name, userFromDBRoleId);
+          
+                         string tokenString = PasswordManager.CreateToken(userFromDB.Name, userFromDBRoleId, _appSettings.Secret);
 
 
                         // return basic user info and authentication token
-                        return Ok(new
+                        return Ok(tokenString);
+
+                        /*return Ok(new
                         {
                             Id = userFromDB.Id,
                             Name = userFromDB.Name,
                             Email = userFromDB.Email,
                             UserRole = userFromDB.UserRole,
                             Token = tokenString
-                        });
-                     
+                        });*/
+
                     }
 
                 }
-                
+                return BadRequest(new { message = "User don't exist"});
+
             }
             return BadRequest(new { message = "Username or password is incorrect" });
  
         }
-
-        private string CreateToken(string userName, Guid roleId)
-        {
-            IEnumerable<Claim> claims = new List<Claim>
-            {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, userName),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, roleId.ToString())
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-
-            
-             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-             var tokenDescriptor = new SecurityTokenDescriptor
-             {
-                 /*Subject = new ClaimsIdentity(new Claim[]
-                 {
-                     new Claim(ClaimTypes.Name, user.Id.ToString())
-                 }),*/
         
-               Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            string tokenString = tokenHandler.WriteToken(token);
-            return tokenString;
-            
-            //return "1";
-
-        }
     }
 }

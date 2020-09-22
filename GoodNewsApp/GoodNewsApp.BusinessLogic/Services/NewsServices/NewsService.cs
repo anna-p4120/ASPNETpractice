@@ -9,24 +9,28 @@ using AutoMapper;
 using System.Threading;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using GoodNewsApp.BusinessLogic.Interfaces;
+using GoodNewsApp.DataAccess.Interfaces;
 
 namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 {
-    public class NewsService
+    public class NewsService : INewsService
     {
-        private readonly GoodNewsAppContext _context;
-        private readonly UnitOfWork _unitOfWork;
+        //private readonly GoodNewsAppContext _context; GoodNewsAppContext context,//_context = context; ////!!!!!
+
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public NewsService(GoodNewsAppContext context, UnitOfWork unitOfWork, IMapper mapper)
+        
+        public NewsService( IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _context = context; ////!!!!!
+            
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
-        public async Task AddAsync(NewsDTO newsDTO) //[Bind("Title,Content,SourseURL")] 
+        public async Task AddAsync(NewsDTO newsDTO)     //[Bind("Title,Content,SourseURL")] 
         {
-            // News newsCreated = new News();
+            
             News newsCreated = _mapper.Map<News>(newsDTO);
 
             await _unitOfWork.NewsRepository.AddAsync(newsCreated);
@@ -42,49 +46,43 @@ namespace GoodNewsApp.BusinessLogic.Services.NewsServices
             NewsDTO newsDTObyId = _mapper.Map<NewsDTO>(newsById);
             return newsDTObyId;
 
-
         }
 
         public async Task<List<NewsDTO>> GetAllAsync(CancellationToken token)
         {
-
             List<News> newsAll = await _unitOfWork.NewsRepository.GetAllAsync(token);
             List<NewsDTO> newsDTOAll = _mapper.Map<List<NewsDTO>>(newsAll);
             return newsDTOAll;
 
-
         }
 
-        public async Task Update(NewsDTO newsDTO)
+        public async Task UpdateAsync(NewsDTO newsDTO)
         {
-
+            
             News newsToUpdate = _mapper.Map<News>(newsDTO);
+            
             try
             {
-
                 _unitOfWork.NewsRepository.Update(newsToUpdate);
-
                 await _unitOfWork.SaveChangeAsync();
-
 
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!NewsExists(newsToUpdate.Id))
+
+                /*if (!NewsExists(newsToUpdate.Id))
                 {
                     throw;
                 }
                 else
                 {
                     throw;
-                }
+                }*/
             }
-
-
         }
 
 
-        public async Task Delete(Guid id) //[Bind("Title,Content,SourseURL")] 
+        public async Task DeleteAsync(Guid id) //[Bind("Title,Content,SourseURL")] 
         {
 
 
@@ -103,10 +101,10 @@ namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 
         }
 
-        private bool NewsExists(Guid id)
+        /*private bool NewsExists(Guid id)
         {
             return _context.News.Any(e => e.Id == id);
         }
-
+        */
     }
 }

@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using GoodNewsApp.BusinessLogic.Interfaces;
 using GoodNewsApp.BusinessLogic.Services.NewsServices;
 using GoodNewsApp.DataAccess.Context;
 using GoodNewsApp.DataAccess.Entities;
 using GoodNewsApp.DataAccess.Interfaces;
 using GoodNewsApp.DataAccess.Repository;
 using GoodNewsApp.WEB.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,23 +17,15 @@ using System.Threading.Tasks;
 
 namespace GoodNewsApp.WEB.Controllers
 {
-    [Authorize]
+    [Authorize(AuthenticationSchemes =
+    CookieAuthenticationDefaults.AuthenticationScheme)]
     public class NewsEditorController : Controller
     {
-        //private readonly GoodNewsAppContext _context;
-        //private readonly UnitOfWork _unitOfWork;
-        //private readonly IMapper _iMapper;
-        private readonly NewsService _newsService;
-
-
-
-
-        //GoodNewsAppContext context, UnitOfWork unitOfWork, IMapper iMapper, 
-        public NewsEditorController(NewsService newsService)
+        
+        private readonly INewsService _newsService;
+   
+        public NewsEditorController(INewsService newsService)
         {
-            //_context = context;
-            //_unitOfWork = unitOfWork;
-            //_iMapper= iMapper;
             _newsService = newsService;
 
     }
@@ -43,12 +37,10 @@ namespace GoodNewsApp.WEB.Controllers
             return View(await _newsService.GetAllAsync(HomeController.cancellationToken));
         }
 
-
-
-        
+     
         public async Task<IActionResult> Details(Guid id)
         {
-            var n = HttpContext.User.Identity.Name;
+            //var n = HttpContext.User.Identity.Name;
 
             if (id == null)
             {
@@ -103,10 +95,8 @@ namespace GoodNewsApp.WEB.Controllers
                 };
 
                 await _newsService.AddAsync(newsDTO);
-               /* await _unitOfWork.NewsRepository.AddAsync(_news);
-                await _unitOfWork.SaveChangeAsync();
-               */
-                return RedirectToAction("Index","Home"); //List
+               
+                return RedirectToAction("Index","Home"); 
 
             }
             return View(newsFromView);
@@ -115,7 +105,7 @@ namespace GoodNewsApp.WEB.Controllers
         // GET: News/Edit/5
         
         
-        public async Task<IActionResult> Edit(Guid id) //Guid? id //cancellationToken
+        public async Task<IActionResult> Edit(Guid id) 
         {
             if (id == null)
             {
@@ -147,7 +137,7 @@ namespace GoodNewsApp.WEB.Controllers
        
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(NewsDetailsViewModel newsFromView)//
+        public async Task<IActionResult> Edit(NewsDetailsViewModel newsFromView)
         {
             NewsDTO newsDTOToChange =  await _newsService.GetByIdAsync(newsFromView.Id, HomeController.cancellationToken);
             if (newsFromView.Id != newsDTOToChange.Id)
@@ -165,7 +155,7 @@ namespace GoodNewsApp.WEB.Controllers
                     newsDTOToChange.SourseURL = newsFromView.SourseURL;
                     newsDTOToChange.EditedOnDate = DateTime.Now;
 
-                     await _newsService.Update(newsDTOToChange);
+                     await _newsService.UpdateAsync(newsDTOToChange);
 
                     
                 }
@@ -180,7 +170,7 @@ namespace GoodNewsApp.WEB.Controllers
         }
 
         // GET: News/Delete/5
-        public async Task<IActionResult> Delete(Guid id) //Guid? 
+        public async Task<IActionResult> Delete(Guid id)
         {
             if (id == null)
             {
@@ -198,12 +188,13 @@ namespace GoodNewsApp.WEB.Controllers
         }
 
         // POST: News/Delete/5
+
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
            
-            await _newsService.Delete(id);
+            await _newsService.DeleteAsync(id);
             
 
             return RedirectToAction("Index", "Home");

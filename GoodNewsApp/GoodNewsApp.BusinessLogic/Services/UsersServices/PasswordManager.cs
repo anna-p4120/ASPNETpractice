@@ -1,11 +1,18 @@
-﻿using System;
+﻿using GoodNewsApp.BusinessLogic.Helpers;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace GoodNewsApp.BusinessLogic.Services.UsersServices
 {
     public class PasswordManager
+        
     {
+         
         public static void CreatePasswordHash(string password, out string savedPasswordHash, out string savedPasswordSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
@@ -41,6 +48,35 @@ namespace GoodNewsApp.BusinessLogic.Services.UsersServices
 
             return true;
         }
+
+        public static string CreateToken(string userName, Guid roleId, string appSettings)
+        {
+
+            //TODO userName replace by email
+
+            IEnumerable<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimsIdentity.DefaultNameClaimType, userName),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, roleId.ToString())
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+
+            var key = Encoding.ASCII.GetBytes(appSettings);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            string tokenString = tokenHandler.WriteToken(token);
+            return tokenString;
+
+            //return "1";
+
+        }
     }
 
-}//byte[] hashBytes = Convert.FromBase64String(savedPasswordHash)
+}

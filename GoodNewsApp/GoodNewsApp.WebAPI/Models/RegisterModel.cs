@@ -5,7 +5,7 @@ using System.Text;
 
 namespace GoodNewsApp.WebAPI.Models
 {
-    class RegisterModel
+    public class RegisterModel
     {
 
         [Required(ErrorMessage = "Не указан Email")]
@@ -23,6 +23,7 @@ namespace GoodNewsApp.WebAPI.Models
 
 
         [Compare("Password", ErrorMessage = "Пароли не совпадают")]
+        [Required(ErrorMessage = "Подтвердите пароль")]
         [DataType(DataType.Password)]
         [Display(Name = "Подтверждение пароля")]
         public string ConfirmPassword { get; set; }

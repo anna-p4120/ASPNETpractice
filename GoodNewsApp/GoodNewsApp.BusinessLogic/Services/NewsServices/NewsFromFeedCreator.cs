@@ -20,7 +20,7 @@ namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 
             try
             {
-
+                //TODO :to const
 
                 Parallel.ForEach(
                     new List<string>{
