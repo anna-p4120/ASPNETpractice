@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using GoodNewsApp.BusinessLogic.Helpers;
+using GoodNewsApp.BusinessLogic.Interfaces;
 using GoodNewsApp.BusinessLogic.Services.UsersServices;
 using GoodNewsApp.DataAccess.Context;
 using GoodNewsApp.DataAccess.Entities;
@@ -22,14 +24,13 @@ namespace GoodNewsApp.WEB.Controllers
 {
     public class UserAccountController : Controller
     {
-        private readonly GoodNewsAppContext _context;
-        private readonly IUnitOfWork _unitOfWork;
+        
+        private readonly IUsersService _usersService;
 
-
-        public UserAccountController(GoodNewsAppContext context, IUnitOfWork unitOfWork)
+        public UserAccountController(IUsersService usersService)
         {
-            _context = context;
-            _unitOfWork = unitOfWork;
+            
+            _usersService = usersService;
         }
 
         [HttpGet]
@@ -57,14 +58,16 @@ namespace GoodNewsApp.WEB.Controllers
         {
             if (ModelState.IsValid)
             {
+                UserDTO userFromDB = await _usersService.GetUserByEmailAsync(registerViewModel.Email);
 
-                User userFromDB = await _unitOfWork.UserRepository.FindBy(u => u.Email == registerViewModel.Email).FirstOrDefaultAsync();
                 if (userFromDB == null)
                 {
+                   
                     string passwordHash, passwordSalt;
 
                     PasswordManager.CreatePasswordHash(registerViewModel.Password, out passwordHash, out passwordSalt);
-                    User newUser = new User()
+
+                    UserDTO newUserDTO = new UserDTO()
                     {
                         Id = Guid.NewGuid(),
                         Name = registerViewModel.Name ?? registerViewModel.Email,
@@ -73,31 +76,17 @@ namespace GoodNewsApp.WEB.Controllers
                         PasswordSalt = passwordSalt
                     };
 
-                    await _unitOfWork.UserRepository.AddAsync(newUser);
+                    CreatedUserRole newUserParams = await _usersService.CreateUserRoleAsync(newUserDTO, DefaultRolesList.User.ToString()); //, RolesList.Admin.ToString()"Admin", 
 
-                    //TODO: default role as const
-                    Guid defaultRoleId = (await _unitOfWork.RoleRepository.FindBy(u => u.Name == "User").FirstOrDefaultAsync()).Id;
-
-                    UserRole newUserRole = new UserRole()
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = newUser.Id,
-                        RoleId = defaultRoleId,
-                        RegistrationDate = DateTime.Now,
-
-                    };
-
-                    await _unitOfWork.UserRoleRepository.AddAsync(newUserRole);
-
-                    await AuthenticateAsync(newUser.Name, defaultRoleId);
-
-                    await _unitOfWork.SaveChangeAsync();
+                    await AuthenticateAsync(newUserParams.Email, newUserParams.UserRolesID[0]);
 
                 }
                 else
                 {
                     ModelState.AddModelError("", "Такой пользователь существует");
+
                     //return Content("Такой пользователь существует");
+
                     return View();
 
                 }
@@ -140,28 +129,24 @@ namespace GoodNewsApp.WEB.Controllers
             if (ModelState.IsValid)
             {
 
-                User userFromDB = await _unitOfWork.UserRepository.
-                    FindBy(u => u.Email == loginViewModel.Email)// && u.PasswordHash == loginViewModel.Password
-                    .FirstOrDefaultAsync();
+                UserDTO userFromDB = await _usersService.GetUserByEmailAsync(loginViewModel.Email);
 
                 if (userFromDB != null)
                 {
                     if (PasswordManager.VerifyPasswordHash(loginViewModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
                     {
-                        // ! if more than one...?
-                        Guid userFromDBRoleId = (await _unitOfWork.UserRoleRepository.
-                        FindBy(u => u.UserId == userFromDB.Id).FirstOrDefaultAsync())
-                        .RoleId;
+                      
+                       List<Guid> userFromDBRoleId = _usersService.GetRoleIdByUserId(userFromDB.Id);
+                        Guid roleID = userFromDBRoleId[0];
 
-                        await AuthenticateAsync(userFromDB.Name, userFromDBRoleId);
-
-                        await _unitOfWork.SaveChangeAsync();
+                        await AuthenticateAsync(userFromDB.Name, roleID);
 
                     }
                         
-
                 }
+
                 else
+
                 {
                     ModelState.AddModelError("", "Укажите правильный логин и(или) пароль");
                     
@@ -178,11 +163,11 @@ namespace GoodNewsApp.WEB.Controllers
 
 
         //TODO userName replace by email
-        private async Task AuthenticateAsync (string userName, Guid roleId)
+        private async Task AuthenticateAsync (string userEmail, Guid roleId)
         {
             IEnumerable<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, userName),
+                new Claim(ClaimsIdentity.DefaultNameClaimType, userEmail),
                 new Claim(ClaimsIdentity.DefaultRoleClaimType, roleId.ToString())
             };
             ClaimsIdentity Id = new ClaimsIdentity

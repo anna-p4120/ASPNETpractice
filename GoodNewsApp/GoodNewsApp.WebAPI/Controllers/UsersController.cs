@@ -18,6 +18,7 @@ using Microsoft.Extensions.Options;
 using System.Threading;
 using GoodNewsApp.DataAccess.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using GoodNewsApp.BusinessLogic.Interfaces;
 
 namespace GoodNewsApp.WebAPI.Controllers
 {
@@ -27,27 +28,24 @@ namespace GoodNewsApp.WebAPI.Controllers
     public class UsersController : ControllerBase
     {
         
-        private readonly IUnitOfWork _unitOfWork;
+        
         private readonly AppSettings _appSettings;
+        private readonly IUsersService _usersService;
 
         public static CancellationToken cancellationToken = new CancellationTokenSource().Token;
 
-        public UsersController(IUnitOfWork unitOfWork, IOptions<AppSettings> appSettings)
+        public UsersController(IUsersService usersService, IOptions<AppSettings> appSettings)
         {          
-            _unitOfWork = unitOfWork;
+            
+            _usersService = usersService;
+
             _appSettings = appSettings.Value;
 
 
         }
 
 
-        //!string.IsNullOrEmpty(registerModel.Email)
-        //        && !string.IsNullOrEmpty(registerModel.Password)
-        //        && string.Compare(registerModel.ConfirmPassword, registerModel.Password) == 0
-
-
-        //TODO compare string object
-
+       
         [AllowAnonymous]
         [HttpPost]
         [Route("register")]
@@ -57,7 +55,8 @@ namespace GoodNewsApp.WebAPI.Controllers
             if (ModelState.IsValid) 
             {
 
-                User userFromDB = await _unitOfWork.UserRepository.FindBy(u => u.Email == registerModel.Email).FirstOrDefaultAsync();
+                UserDTO userFromDB = await _usersService.GetUserByEmailAsync(registerModel.Email);
+
                 if (userFromDB == null)
                 {
                     try
@@ -66,7 +65,7 @@ namespace GoodNewsApp.WebAPI.Controllers
 
                         PasswordManager.CreatePasswordHash(registerModel.Password, out passwordHash, out passwordSalt);
 
-                        User newUser = new User()
+                        UserDTO newUserDTO = new UserDTO()
                         {
                             Id = Guid.NewGuid(),
                             Name = registerModel.Name ?? registerModel.Email,
@@ -75,25 +74,9 @@ namespace GoodNewsApp.WebAPI.Controllers
                             PasswordSalt = passwordSalt
                         };
 
-                        Guid defaultRoleId = (await _unitOfWork.RoleRepository.FindBy(u => u.Name == "User").FirstOrDefaultAsync()).Id;
+                        CreatedUserRole newUserParams = await _usersService.CreateUserRoleAsync(newUserDTO, DefaultRolesList.User.ToString()); //, RolesList.Admin.ToString()"Admin", 
 
-                        UserRole newUserRole = new UserRole()
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = newUser.Id,
-                            RoleId = defaultRoleId,
-                            RegistrationDate = DateTime.Now,
-
-                        };
-
-                        
-                        await _unitOfWork.UserRepository.AddAsync(newUser);
-
-                        await _unitOfWork.UserRoleRepository.AddAsync(newUserRole);
-                        
-                        await _unitOfWork.SaveChangeAsync();
-
-                        return Ok(); //newUser
+                        return Ok(newUserDTO);
 
 
                     }
@@ -121,36 +104,30 @@ namespace GoodNewsApp.WebAPI.Controllers
             
             if (ModelState.IsValid)
             {
-                User userFromDB = await _unitOfWork.UserRepository.
-                    FindBy(u => string.Compare(u.Email, loginModel.Email) == 0)
-                  .FirstOrDefaultAsync();
+                UserDTO userFromDB = await _usersService.GetUserByEmailAsync(loginModel.Email);
 
                 if (userFromDB != null)
                 {
 
                     if (PasswordManager.VerifyPasswordHash(loginModel.Password, userFromDB.PasswordHash, userFromDB.PasswordSalt))
                     {
-                        // ! if more than one...?
-                        Guid userFromDBRoleId = 
-                         (await _unitOfWork.UserRoleRepository.
-                         FindBy(u => u.UserId == userFromDB.Id)
-                         .FirstOrDefaultAsync())
-                         .RoleId;
-          
-                         string tokenString = PasswordManager.CreateToken(userFromDB.Name, userFromDBRoleId, _appSettings.Secret);
+                        List<Guid> userFromDBRoleId = _usersService.GetRoleIdByUserId(userFromDB.Id);
+                        Guid roleID = userFromDBRoleId[0];
+
+                        string tokenString = PasswordManager.CreateToken(userFromDB.Name, roleID, _appSettings.Secret);
 
 
                         // return basic user info and authentication token
-                        return Ok(tokenString);
+                       // return Ok(tokenString);
 
-                        /*return Ok(new
+                        return Ok(new
                         {
                             Id = userFromDB.Id,
                             Name = userFromDB.Name,
                             Email = userFromDB.Email,
-                            UserRole = userFromDB.UserRole,
+                            UserRole = roleID,
                             Token = tokenString
-                        });*/
+                        });
 
                     }
 

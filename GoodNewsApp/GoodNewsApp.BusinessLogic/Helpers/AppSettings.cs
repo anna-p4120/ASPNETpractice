@@ -6,8 +6,11 @@ namespace GoodNewsApp.BusinessLogic.Helpers
 {
     public class AppSettings
     {
-        
-            public string Secret { get; set; }
-        
+
+        public string Secret { get; set; }
+        public string InitialAdminEmail { get; set; }
+        public string InitialAdminPassword { get; set; }
+        public string InitialAdminName { get; set; }
+
     }
 }

@@ -10,15 +10,10 @@ namespace GoodNewsApp.DataAccess.Entities
 
         public string Name { get; set; }
 
-        public virtual IEnumerable<UserRole> UserRole { get; set; }
+        public  IEnumerable<UserRole> UserRoles { get; set; }
 
 
     }
 
-    //?Configuration  ?сlass
-    enum RolesList
-    {
-        Admin,
-        User
-    }
+   
 }

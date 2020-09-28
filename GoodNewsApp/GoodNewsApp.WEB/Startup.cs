@@ -28,6 +28,7 @@ using System.Text;
 using GoodNewsApp.BusinessLogic.Helpers;
 
 using GoodNewsApp.BusinessLogic.Interfaces;
+using GoodNewsApp.BusinessLogic.Services.UsersServices;
 
 namespace GoodNewsApp.WEB
 {
@@ -116,6 +117,8 @@ namespace GoodNewsApp.WEB
             services.AddScoped<IUnitOfWork,UnitOfWork>();
 
             services.AddScoped<INewsService, NewsService>();
+
+            services.AddScoped<IUsersService, UsersService>();
 
             services.AddSingleton<NewsFromFeedJob>();
 

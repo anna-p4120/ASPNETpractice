@@ -17,8 +17,7 @@ namespace GoodNewsApp.DataAccess.Repository
     {
         private readonly GoodNewsAppContext _context;
         private readonly DbSet<TEntity> _dbSet;
-        //private readonly TEntity _entity;
-
+        
         public Repository(GoodNewsAppContext context)
         {
             _context = context;
@@ -27,17 +26,17 @@ namespace GoodNewsApp.DataAccess.Repository
 
         public async Task<List<TEntity>> GetAllAsync(CancellationToken token)
         {
-            return await _dbSet.ToListAsync(token);
+            return await _dbSet.AsNoTracking().ToListAsync(token);
         }
 
         public async Task<TEntity> GetByIdAsync(Guid id, CancellationToken token)
         {
-            return await _dbSet.FirstOrDefaultAsync(entity => entity.Id.Equals(id), token);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(entity => entity.Id.Equals(id), token);
         }
 
         public IQueryable<TEntity> FindBy(Expression<Func<TEntity, bool>> searchPredicate, params Expression<Func<TEntity, object>>[] includesPredicate)
         {
-            var result = _dbSet.Where(searchPredicate);
+            var result = _dbSet.AsNoTracking().Where(searchPredicate);
             if (includesPredicate.Any())
             {
                 result = includesPredicate
@@ -73,10 +72,7 @@ namespace GoodNewsApp.DataAccess.Repository
             _dbSet.Remove(await _dbSet.FirstOrDefaultAsync(entity => entity.Id.Equals(id)));
         }
 
-        /*public Task<int> SaveChangesAsync()
-       {
-           return await _context.SaveChangesAsync();
-       };*/
+        
     }
 
 }

@@ -35,11 +35,14 @@ namespace GoodNewsApp.DataAccess.Repository
 
         }
 
-        //GoodNewsAppContext IUnitOfWork.Context => throw new NotImplementedException();
-
         public async Task<int> SaveChangeAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+        public int SaveChange()  
+        {
+                return _context.SaveChanges();
+
         }
     }
 }

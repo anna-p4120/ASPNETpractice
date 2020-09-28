@@ -16,5 +16,6 @@ namespace GoodNewsApp.DataAccess.Interfaces
         public IRepository<Role> RoleRepository { get; }
 
         Task<int> SaveChangeAsync();
+        int SaveChange();
     }
 }

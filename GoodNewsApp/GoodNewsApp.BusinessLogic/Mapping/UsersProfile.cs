@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GoodNewsApp.BusinessLogic.Services.NewsServices;
+using GoodNewsApp.BusinessLogic.Services.UsersServices;
 using GoodNewsApp.DataAccess.Entities;
 using System;
 using System.Collections.Generic;
@@ -7,12 +8,13 @@ using System.Text;
 
 namespace GoodNewsApp.BusinessLogic.Mapping
 {
-    public class NewsProfile: Profile
+    public class UsersProfile: Profile
     {
-        public NewsProfile()
+        public UsersProfile()
         {
-            CreateMap<News, NewsDTO>().ReverseMap();
+            CreateMap<User, UserDTO>().ReverseMap();
             
+
         }
     }
 }

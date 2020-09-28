@@ -16,7 +16,7 @@ namespace GoodNewsApp.BusinessLogic.Services.NewsServices
 {
     public class NewsService : INewsService
     {
-        //private readonly GoodNewsAppContext _context; GoodNewsAppContext context,//_context = context; ////!!!!!
+        
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -28,7 +28,7 @@ namespace GoodNewsApp.BusinessLogic.Services.NewsServices
             _mapper = mapper;
         }
 
-        public async Task AddAsync(NewsDTO newsDTO)     //[Bind("Title,Content,SourseURL")] 
+        public async Task AddAsync(NewsDTO newsDTO) 
         {
             
             News newsCreated = _mapper.Map<News>(newsDTO);
